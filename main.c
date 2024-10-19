@@ -17,8 +17,6 @@ struct planet {
     Vector2 position;
     double radius;
     double mass;
-    double z;
-    double rads;
 };
 
 
@@ -31,8 +29,6 @@ void create_planets(struct planet* planets, const int number_of_planets){
         planets[i].position = position;
         planets[i].radius = base_radius;
         planets[i].mass = 50.0;
-        planets[i].z = 0.0;
-        planets[i].rads = 10000.0;
         base_radius += 50.0;
         base_position_x += 600.0;
     }
@@ -113,41 +109,18 @@ void update_player_position(struct player* player, const int screen_width, const
 }
 
 
-void update_player_velocity(struct player* player, struct planet planets[], int number_of_planets){
+void update_player_velocity(struct player* player, const struct planet planets[], int number_of_planets){
     for (int i=0;i<number_of_planets;++i){
         double z = get_distance_between_two_vectors(player->position, planets[i].position);
 
         DrawLineV(player->position, planets[i].position, MAROON); // TODO: Move this to a separate function
 
         if (z < 100) {
-            if (planets[i].z == 0.0) {
-                planets[i].z = z;
-            } else {
-                z = planets[i].z;
-            }
-
-            Vector2 a = {planets[i].position.x + z, planets[i].position.y};
-            double dist = 0.0;
-            if (player->position.y > planets[i].position.y) {
-                dist = get_distance_between_two_vectors(player->position, a);
-            } else {
-                dist = -get_distance_between_two_vectors(player->position, a);
-            }
-            double rads = dist/z;
-            
-            if (planets[i].rads == 10000.0) {
-                planets[i].rads = rads;
-            } else {
-                planets[i].rads = planets[i].rads + 0.001;
-                rads = planets[i].rads;
-            }
-            
-            if (planets[i].rads >= M_PI) {
-                planets[i].rads = planets[i].rads - 2*M_PI;
-            }
-            
-            player->velocity.y = (planets[i].position.y + (z * sin(rads))) - player->position.y;
-            player->velocity.x = (planets[i].position.x + (z * cos(rads))) - player->position.x;
+            double rads = atan2(player->position.y - planets[i].position.y, player->position.x - planets[i].position.x);
+            rads += 0.001;
+             
+            if (!IsKeyDown(KEY_SPACE))player->velocity.y = (planets[i].position.y + (z * sin(rads))) - player->position.y;
+            if (!IsKeyDown(KEY_SPACE))player->velocity.x = (planets[i].position.x + (z * cos(rads))) - player->position.x;
         }
     }
 }
@@ -167,6 +140,7 @@ int main(void)
     create_planets(planets, number_of_planets);
 
     InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
+    SetWindowMonitor(1);
 
     while (!WindowShouldClose())
     {
