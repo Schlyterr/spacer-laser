@@ -5,22 +5,22 @@
 #include <signal.h>
 
 
-struct player {
+typedef struct {
     Vector2 position;
     Vector2 velocity;
     double radius;
     double mass;
-};
+} player;
 
 
-struct planet {
+typedef struct {
     Vector2 position;
     double radius;
     double mass;
-};
+} planet;
 
 
-void create_planets(struct planet* planets, const int number_of_planets){
+void create_planets(planet* planets, const int number_of_planets){
     double base_radius = 25.0;
     float base_position_x = 100.0;
     float base_position_y = 200.0;
@@ -36,7 +36,7 @@ void create_planets(struct planet* planets, const int number_of_planets){
 }
 
 
-void draw_planets(const struct planet planets[], const int number_of_planets){
+void draw_planets(const planet planets[], const int number_of_planets){
     for (int i=0; i<number_of_planets; ++i) {
         DrawCircle(planets[i].position.x, planets[i].position.y, planets[i].radius, MAROON);
         DrawCircleLinesV(planets[i].position, planets[i].mass, MAROON);
@@ -44,12 +44,12 @@ void draw_planets(const struct planet planets[], const int number_of_planets){
 }
 
 
-void draw_player(const struct player* player){
+void draw_player(const player* player){
     DrawCircleV(player->position, player->radius, MAROON);
 }
 
 
-void draw_player_velocity(struct player* player){
+void draw_player_velocity(player* player){
     float velocity_vector_x = player->position.x + player->velocity.x * 2000.0;
     float velocity_vector_y = player->position.y + player->velocity.y * 2000.0;
     Vector2 endpoint = { velocity_vector_x, velocity_vector_y };
@@ -77,7 +77,7 @@ void draw_stat(char *text, double value, const int stats_position_x, const int s
 }
 
 
-void draw_stats(struct player* player, const int screen_width, const int screen_height){
+void draw_stats(const player* player, const int screen_width, const int screen_height){
     const int stats_position_x = screen_width - 200;
     const int stats_position_y = 20;
 
@@ -91,7 +91,7 @@ void draw_stats(struct player* player, const int screen_width, const int screen_
 }
 
 
-void update_player_position(struct player* player, const int screen_width, const int screen_height){
+void update_player_position(player* player, const int screen_width, const int screen_height){
     if (player->position.x >= 0 && player->position.x <= screen_width) {
         player->position.x += player->velocity.x;
     } else if (player->position.x > screen_width){
@@ -110,7 +110,7 @@ void update_player_position(struct player* player, const int screen_width, const
 }
 
 
-void update_player_velocity(struct player* player, const struct planet planets[], int number_of_planets){
+void update_player_velocity(player* player, const planet planets[], int number_of_planets){
     for (int i=0;i<number_of_planets;++i){
         double z = get_distance_between_two_vectors(player->position, planets[i].position);
 
@@ -136,8 +136,8 @@ int main(void)
     Vector2 player_start_position = { (float)screen_width/2, (float)screen_height/2 };
     Vector2 player_start_velocity = { 0.05, 0.005 };
 
-    struct player player = { player_start_position, player_start_velocity, 5.0, 10.0 };
-    struct planet planets[number_of_planets] = {};
+    player player = { player_start_position, player_start_velocity, 5.0, 10.0 };
+    planet planets[number_of_planets] = {};
     create_planets(planets, number_of_planets);
 
     InitWindow(screen_width, screen_height, "SpacerLaser");
