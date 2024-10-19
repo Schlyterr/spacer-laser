@@ -28,7 +28,7 @@ void create_planets(struct planet* planets, const int number_of_planets){
         Vector2 position = { base_position_x, base_position_y };
         planets[i].position = position;
         planets[i].radius = base_radius;
-        planets[i].mass = 50.0;
+        planets[i].mass = 100.0;
         base_radius += 50.0;
         base_position_x += 600.0;
     }
@@ -36,14 +36,15 @@ void create_planets(struct planet* planets, const int number_of_planets){
 }
 
 
-void draw_planets(const struct planet* planets, const int number_of_planets){
+void draw_planets(const struct planet planets[], const int number_of_planets){
     for (int i=0; i<number_of_planets; ++i) {
-        DrawCircleLinesV(planets[i].position, planets[i].radius, MAROON);
+        DrawCircle(planets[i].position.x, planets[i].position.y, planets[i].radius, MAROON);
+        DrawCircleLinesV(planets[i].position, planets[i].mass, MAROON);
     }
 }
 
 
-void draw_player(struct player* player){
+void draw_player(const struct player* player){
     DrawCircleV(player->position, player->radius, MAROON);
 }
 
@@ -115,7 +116,7 @@ void update_player_velocity(struct player* player, const struct planet planets[]
 
         DrawLineV(player->position, planets[i].position, MAROON); // TODO: Move this to a separate function
 
-        if (z < 100) {
+        if (z < planets[i].mass) {
             double rads = atan2(player->position.y - planets[i].position.y, player->position.x - planets[i].position.x);
             rads += 0.001;
              
@@ -139,7 +140,7 @@ int main(void)
     struct planet planets[number_of_planets] = {};
     create_planets(planets, number_of_planets);
 
-    InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
+    InitWindow(screen_width, screen_height, "SpacerLaser");
     SetWindowMonitor(1);
 
     while (!WindowShouldClose())
