@@ -119,7 +119,7 @@ void update_player_velocity(player* player, const planet planets[], int number_o
         if (z < planets[i].mass) {
             double rads = atan2(player->position.y - planets[i].position.y, player->position.x - planets[i].position.x);
             rads += 0.001;
-             
+
             if (!IsKeyDown(KEY_SPACE))player->velocity.y = (planets[i].position.y + (z * sin(rads))) - player->position.y;
             if (!IsKeyDown(KEY_SPACE))player->velocity.x = (planets[i].position.x + (z * cos(rads))) - player->position.x;
         }
@@ -143,15 +143,26 @@ int main(void)
     InitWindow(screen_width, screen_height, "SpacerLaser");
     SetWindowMonitor(1);
 
+    Camera2D camera = { 0 };
+    camera.target = (Vector2){ player.position.x + 20.0f, player.position.y + 20.0f };
+    camera.offset = (Vector2){ screen_width/2.0f, screen_height/2.0f };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
+
+    //SetTargetFPS(60); //TODO: This should probably be added at some point
+
     while (!WindowShouldClose())
     {
         if (IsKeyDown(KEY_D)) player.velocity.x += 0.00005f;
         if (IsKeyDown(KEY_A)) player.velocity.x -= 0.00005f;
         if (IsKeyDown(KEY_W)) player.velocity.y -= 0.00005f;
         if (IsKeyDown(KEY_S)) player.velocity.y += 0.00005f;
+        
+        camera.target = (Vector2){ player.position.x, player.position.y };
 
         BeginDrawing();
             ClearBackground(RAYWHITE);
+            BeginMode2D(camera);
 
             draw_planets(planets, number_of_planets);
             draw_player(&player);
