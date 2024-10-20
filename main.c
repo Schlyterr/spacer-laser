@@ -36,9 +36,11 @@ void create_planets(planet* planets, const int number_of_planets){
 }
 
 
-void draw_planets(const planet planets[], const int number_of_planets){
+void draw_planets(const planet planets[], const int number_of_planets, const Texture2D texture){
     for (int i=0; i<number_of_planets; ++i) {
-        DrawCircle(planets[i].position.x, planets[i].position.y, planets[i].radius, MAROON);
+        double scale = planets[i].radius / 75.0; // TODO: Not very nice to hardcode 75.0 here
+        Vector2 texture_center = {planets[i].position.x-64.0*scale, planets[i].position.y-64.0*scale}; // TODO: Not very nice to hardcode 64.0 here. We do this because the image is 128x128
+        DrawTextureEx(texture, texture_center, 0, scale, WHITE);
         DrawCircleLinesV(planets[i].position, planets[i].mass, MAROON);
     }
 }
@@ -73,7 +75,7 @@ double get_distance_between_two_vectors(Vector2 vector, Vector2 vector2){
 void draw_stat(char *text, double value, const int stats_position_x, const int stats_position_y, const int position){
     char arr[100];
     sprintf(arr, text, value);
-    DrawText(arr, stats_position_x, stats_position_y*position, 20, BLACK);
+    DrawText(arr, stats_position_x, stats_position_y*position, 20, RAYWHITE);
 }
 
 
@@ -92,21 +94,8 @@ void draw_stats(const player* player, const int screen_width, const int screen_h
 
 
 void update_player_position(player* player, const int screen_width, const int screen_height){
-    if (player->position.x >= 0 && player->position.x <= screen_width) {
-        player->position.x += player->velocity.x;
-    } else if (player->position.x > screen_width){
-        player->position.x = 0.0;
-    } else if (player->position.x < 0.0){
-        player->position.x = screen_width;
-    }
-
-    if (player->position.y >= 0 && player->position.y <= screen_height) {
-        player->position.y += player->velocity.y;
-    } else if (player->position.y > screen_height) {
-        player->position.y = 0.0;
-    } else if (player->position.y < 0.0) {
-        player->position.y = screen_height;
-    }
+    player->position.x += player->velocity.x;
+    player->position.y += player->velocity.y;
 }
 
 
@@ -149,6 +138,7 @@ int main(void)
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
+    Texture2D red_planet = LoadTexture("resources/red_planet_large.png");
     //SetTargetFPS(60); //TODO: This should probably be added at some point
 
     while (!WindowShouldClose())
@@ -161,10 +151,10 @@ int main(void)
         camera.target = (Vector2){ player.position.x, player.position.y };
 
         BeginDrawing();
-            ClearBackground(RAYWHITE);
+            ClearBackground((Color){ 0, 0, 0, 255 });
             BeginMode2D(camera);
 
-            draw_planets(planets, number_of_planets);
+            draw_planets(planets, number_of_planets, red_planet);
             draw_player(&player);
             draw_player_velocity(&player);
 
