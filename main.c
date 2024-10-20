@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <signal.h>
+#include <stdlib.h>
 
 
 typedef struct {
@@ -20,10 +21,16 @@ typedef struct {
 } planet;
 
 
-void create_planets(planet* planets, const int number_of_planets){
+typedef struct {
+    Vector2 position;
+    double height;
+    double width;
+    planet planets[2];
+} tile;
+
+
+void create_planets(planet* planets, const int number_of_planets, float base_position_x, float base_position_y){
     double base_radius = 25.0;
-    float base_position_x = 100.0;
-    float base_position_y = 200.0;
     for (int i=0; i<number_of_planets; ++i) {
         Vector2 position = { base_position_x, base_position_y };
         planets[i].position = position;
@@ -43,11 +50,13 @@ void draw_planets(const planet planets[], const int number_of_planets, const Tex
         DrawTextureEx(texture, texture_center, 0, scale, WHITE);
         DrawCircleLinesV(planets[i].position, planets[i].mass, MAROON);
     }
+    return;
 }
 
 
 void draw_player(const player* player){
     DrawCircleV(player->position, player->radius, MAROON);
+    return;
 }
 
 
@@ -56,6 +65,7 @@ void draw_player_velocity(player* player){
     float velocity_vector_y = player->position.y + player->velocity.y * 2000.0;
     Vector2 endpoint = { velocity_vector_x, velocity_vector_y };
     DrawLineEx(player->position, endpoint, 4, MAROON);
+    return;
 }
 
 
@@ -76,6 +86,7 @@ void draw_stat(char *text, double value, const int stats_position_x, const int s
     char arr[100];
     sprintf(arr, text, value);
     DrawText(arr, stats_position_x, stats_position_y*position, 20, RAYWHITE);
+    return;
 }
 
 
@@ -90,29 +101,56 @@ void draw_stats(const player* player, const int screen_width, const int screen_h
 
     const float speed = get_distance_single_vector(player->velocity);
     draw_stat("V: %f", speed, stats_position_x, stats_position_y, 5);
+    return;
 }
 
 
 void update_player_position(player* player, const int screen_width, const int screen_height){
     player->position.x += player->velocity.x;
     player->position.y += player->velocity.y;
+    return;
 }
 
 
-void update_player_velocity(player* player, const planet planets[], int number_of_planets){
-    for (int i=0;i<number_of_planets;++i){
-        double z = get_distance_between_two_vectors(player->position, planets[i].position);
+void update_player_velocity(player* player, const tile tiles[], int number_of_tiles, int number_of_planets){
+    for (int j=0;j<number_of_tiles;++j) {
+        for (int i=0;i<number_of_planets;++i){
+            double z = get_distance_between_two_vectors(player->position, tiles[j].planets[i].position);
 
-        DrawLineV(player->position, planets[i].position, MAROON); // TODO: Move this to a separate function
+            DrawLineV(player->position, tiles[j].planets[i].position, MAROON); // TODO: Move this to a separate function
 
-        if (z < planets[i].mass) {
-            double rads = atan2(player->position.y - planets[i].position.y, player->position.x - planets[i].position.x);
-            rads += 0.001;
+            if (z < tiles[j].planets[i].mass) {
+                double rads = atan2(player->position.y - tiles[j].planets[i].position.y, player->position.x - tiles[j].planets[i].position.x);
+                rads += 0.001;
 
-            if (!IsKeyDown(KEY_SPACE))player->velocity.y = (planets[i].position.y + (z * sin(rads))) - player->position.y;
-            if (!IsKeyDown(KEY_SPACE))player->velocity.x = (planets[i].position.x + (z * cos(rads))) - player->position.x;
+                if (!IsKeyDown(KEY_SPACE))player->velocity.y = (tiles[j].planets[i].position.y + (z * sin(rads))) - player->position.y;
+                if (!IsKeyDown(KEY_SPACE))player->velocity.x = (tiles[j].planets[i].position.x + (z * cos(rads))) - player->position.x;
+            }
         }
     }
+    return;
+}
+
+
+void create_tiles(tile* tiles, int number_of_tiles, int number_of_planets) {
+    double  width[3] = {-1480.0, 0.0, 1480.0};
+    double  height[3] = {-850.0, 0.0, 850.0};
+    
+    int idx = 0;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            double tile_position_x = 0.0 + width[i];
+            double tile_position_y = 0.0 + height[j];
+            Vector2 tile_position = {tile_position_x, tile_position_y};
+            
+            create_planets(tiles[idx].planets, number_of_planets, tile_position.x-100.0, tile_position.y-200.0);
+            tiles[idx].position = tile_position;
+            tiles[idx].height = 1480.0;
+            tiles[idx].width = 850.0;
+            idx += 1;
+        }
+    }
+    return;
 }
 
 
@@ -121,13 +159,15 @@ int main(void)
     const int screen_width = 1480;
     const int screen_height = 850;
     const int number_of_planets = 2;
+    const int number_of_tiles = 9;
 
     Vector2 player_start_position = { (float)screen_width/2, (float)screen_height/2 };
     Vector2 player_start_velocity = { 0.05, 0.005 };
 
     player player = { player_start_position, player_start_velocity, 5.0, 10.0 };
-    planet planets[number_of_planets] = {};
-    create_planets(planets, number_of_planets);
+
+    tile tiles[number_of_tiles] = {};
+    create_tiles(tiles, number_of_tiles, number_of_planets);
 
     InitWindow(screen_width, screen_height, "SpacerLaser");
     SetWindowMonitor(1);
@@ -154,11 +194,13 @@ int main(void)
             ClearBackground((Color){ 0, 0, 0, 255 });
             BeginMode2D(camera);
 
-            draw_planets(planets, number_of_planets, red_planet);
+            for (int i=0; i<number_of_tiles; ++i) {
+                draw_planets(tiles[i].planets, number_of_planets, red_planet);
+            }
             draw_player(&player);
             draw_player_velocity(&player);
 
-            update_player_velocity(&player, planets, number_of_planets);
+            update_player_velocity(&player, tiles, number_of_tiles, number_of_planets);
             update_player_position(&player, screen_width, screen_height);
 
             draw_stats(&player, screen_width, screen_height);
