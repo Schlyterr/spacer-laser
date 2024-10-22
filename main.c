@@ -31,8 +31,7 @@ typedef struct {
 } tile;
 
 
-void create_planets(tile* tiles, int number_of_tiles, int number_of_planets) {
-    Texture2D red_planet = LoadTexture("resources/red_planet_large.png");
+void create_planets(tile* tiles, int number_of_tiles, int number_of_planets, const Texture2D* textures[3]) {
     double base_radius = 25.0;
     for (int j=0; j<number_of_tiles; ++j) {
         double base_position_x = tiles[j].position.x-100.0;
@@ -44,7 +43,8 @@ void create_planets(tile* tiles, int number_of_tiles, int number_of_planets) {
             tiles[j].planets[i].position = position;
             tiles[j].planets[i].radius = base_radius;
             tiles[j].planets[i].mass = 100.0 + rand() % 100;
-            tiles[j].planets[i].texture = red_planet;
+            int texture = rand() % 3;
+            tiles[j].planets[i].texture = *textures[texture];
             base_radius = 75.0 + rand() % 50;
         }
     }
@@ -182,9 +182,18 @@ int main(void)
     InitWindow(screen_width, screen_height, "SpacerLaser");
     SetWindowMonitor(1);
 
+
+    Texture2D red_planet = LoadTexture("resources/red_planet_large.png");
+    Texture2D purple_planet = LoadTexture("resources/purple_planet_large.png");
+    Texture2D bling_planet = LoadTexture("resources/bling_planet_large.png");
+    static const Texture2D *textures[3] = {};
+    textures[0] = &red_planet;
+    textures[1] = &purple_planet;
+    textures[2] = &bling_planet;
+
     tile tiles[number_of_tiles] = {};
     create_tiles(tiles, number_of_tiles, number_of_planets);
-    create_planets(tiles, number_of_tiles, number_of_planets);
+    create_planets(tiles, number_of_tiles, number_of_planets, textures);
 
     Camera2D camera = { 0 };
     camera.target = (Vector2){ player.position.x + 20.0f, player.position.y + 20.0f };
