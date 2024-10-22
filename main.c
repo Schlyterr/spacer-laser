@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <time.h>
 
 
 typedef struct {
@@ -18,6 +19,7 @@ typedef struct {
     Vector2 position;
     double radius;
     double mass;
+    Texture2D texture;
 } planet;
 
 
@@ -29,25 +31,32 @@ typedef struct {
 } tile;
 
 
-void create_planets(planet* planets, const int number_of_planets, float base_position_x, float base_position_y){
+void create_planets(tile* tiles, int number_of_tiles, int number_of_planets) {
+    Texture2D red_planet = LoadTexture("resources/red_planet_large.png");
     double base_radius = 25.0;
-    for (int i=0; i<number_of_planets; ++i) {
-        Vector2 position = { base_position_x, base_position_y };
-        planets[i].position = position;
-        planets[i].radius = base_radius;
-        planets[i].mass = 100.0;
-        base_radius += 50.0;
-        base_position_x += 600.0;
+    for (int j=0; j<number_of_tiles; ++j) {
+        double base_position_x = tiles[j].position.x-100.0;
+        double base_position_y = tiles[j].position.y-200.0;
+        for (int i=0; i<number_of_planets; ++i) {
+            base_position_x = base_position_x + rand() % 1480;
+            base_position_y = base_position_y + rand() % 850;
+            Vector2 position = { base_position_x, base_position_y };
+            tiles[j].planets[i].position = position;
+            tiles[j].planets[i].radius = base_radius;
+            tiles[j].planets[i].mass = 100.0 + rand() % 100;
+            tiles[j].planets[i].texture = red_planet;
+            base_radius = 75.0 + rand() % 50;
+        }
     }
     return;
 }
 
 
-void draw_planets(const planet planets[], const int number_of_planets, const Texture2D texture){
+void draw_planets(const planet planets[], const int number_of_planets){
     for (int i=0; i<number_of_planets; ++i) {
         double scale = planets[i].radius / 75.0; // TODO: Not very nice to hardcode 75.0 here
         Vector2 texture_center = {planets[i].position.x-64.0*scale, planets[i].position.y-64.0*scale}; // TODO: Not very nice to hardcode 64.0 here. We do this because the image is 128x128
-        DrawTextureEx(texture, texture_center, 0, scale, WHITE);
+        DrawTextureEx(planets[i].texture, texture_center, 0, scale, WHITE);
         DrawCircleLinesV(planets[i].position, planets[i].mass, MAROON);
     }
     return;
@@ -143,10 +152,13 @@ void create_tiles(tile* tiles, int number_of_tiles, int number_of_planets) {
             double tile_position_y = 0.0 + height[j];
             Vector2 tile_position = {tile_position_x, tile_position_y};
             
-            create_planets(tiles[idx].planets, number_of_planets, tile_position.x-100.0, tile_position.y-200.0);
             tiles[idx].position = tile_position;
             tiles[idx].height = 1480.0;
             tiles[idx].width = 850.0;
+            
+            for (int k=0; k<number_of_planets; ++k) {
+                tiles[idx].planets[k] = (planet){ 0 };
+            }
             idx += 1;
         }
     }
@@ -160,17 +172,19 @@ int main(void)
     const int screen_height = 850;
     const int number_of_planets = 2;
     const int number_of_tiles = 9;
+    srand(time(NULL));
 
     Vector2 player_start_position = { (float)screen_width/2, (float)screen_height/2 };
     Vector2 player_start_velocity = { 0.05, 0.005 };
 
     player player = { player_start_position, player_start_velocity, 5.0, 10.0 };
 
-    tile tiles[number_of_tiles] = {};
-    create_tiles(tiles, number_of_tiles, number_of_planets);
-
     InitWindow(screen_width, screen_height, "SpacerLaser");
     SetWindowMonitor(1);
+
+    tile tiles[number_of_tiles] = {};
+    create_tiles(tiles, number_of_tiles, number_of_planets);
+    create_planets(tiles, number_of_tiles, number_of_planets);
 
     Camera2D camera = { 0 };
     camera.target = (Vector2){ player.position.x + 20.0f, player.position.y + 20.0f };
@@ -178,7 +192,6 @@ int main(void)
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    Texture2D red_planet = LoadTexture("resources/red_planet_large.png");
     //SetTargetFPS(60); //TODO: This should probably be added at some point
 
     while (!WindowShouldClose())
@@ -195,7 +208,7 @@ int main(void)
             BeginMode2D(camera);
 
             for (int i=0; i<number_of_tiles; ++i) {
-                draw_planets(tiles[i].planets, number_of_planets, red_planet);
+                draw_planets(tiles[i].planets, number_of_planets);
             }
             draw_player(&player);
             draw_player_velocity(&player);
