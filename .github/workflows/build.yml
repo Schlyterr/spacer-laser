@@ -1,0 +1,20 @@
+name: Build SpacerLaser
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build artifact
+      run: make build
+  
+    - uses: actions/upload-artifact@v4
+      with:
+      name: spacer-laser-artifact
+      path: SpacerLaser
